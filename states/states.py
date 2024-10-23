@@ -13,7 +13,9 @@ class BotCargoStates(StatesGroup):
 class BotStates(StatesGroup):
     type = State()
     invoice = State()
-    weight= State()
+    weight = State()
     volume = State()
     city = State()
     un_license = State()
+    prequest = State()
+    final_calc = State()

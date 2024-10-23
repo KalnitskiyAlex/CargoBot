@@ -36,3 +36,13 @@ def gen_unlicense_markup():
     but2 = InlineKeyboardButton("Нет", callback_data="no")
     keyboard.row(but1, but2)
     return keyboard
+
+def gen_calculate_markup():
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("Рассчитать", callback_data="calculate"))
+    return keyboard
+
+def gen_main_markup() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Главное меню", callback_data="main_menu"))
+    return keyboard
