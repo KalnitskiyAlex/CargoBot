@@ -1,6 +1,5 @@
 from telebot.types import Message
-
-from keyboards.inline.InlineButtons import gen_start_markup
+from keyboards.inline.inlineButtons import gen_start_markup
 from loader import bot
 
 
