@@ -1,7 +1,8 @@
 from utils.misc.data_for_calculate import insurance_tax_list
 
 
-def price_calculation(brutto_weight: float, base_price: float, unlicensed_tax: bool, city: str, invoice_price: float):
+def price_calculation(brutto_weight: float = 0, base_price: float = 0, unlicensed_tax: bool = False, city: str = "",
+                      invoice_price: float = 0) -> float:
     if base_price < 200:
         if unlicensed_tax:
             if city == "Moscow":
