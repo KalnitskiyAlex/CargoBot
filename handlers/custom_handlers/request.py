@@ -1,23 +1,24 @@
 from telebot.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from database.db_classes import Request
-from keyboards.inline.inlineButtons import (gen_calculate_markup, gen_main_markup, gen_start_markup, gen_send_markup)
-from keyboards.reply.replyButtons import gen_city_markup, gen_unlicense_markup
+from keyboards.inline.inlineButtons import gen_main_markup
+from keyboards.reply.replyButtons import gen_city_markup, gen_unlicense_markup, gen_send_markup, gen_phone_markup
 from loader import bot
-from states.states import BotRequestStates
+from states.states import BotRequestStates, BotStates
 from datetime import datetime
 
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "new_order")
-def cargo_start_calculator(callback_query: CallbackQuery) -> None:
-    bot.send_message(callback_query.from_user.id, "Вы находитесь в меню 'Заявка на перевозку товара'. "
+def cargo_start_request(callback_query: CallbackQuery) -> None:
+    bot.send_message(callback_query.from_user.id, "Вы формируете Заявку на перевозку груза. "
                                                   "Прошу Вас ответственно подойти к заполнению разделов заявки.")
+    bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
     bot.set_state(callback_query.from_user.id, BotRequestStates.req_type, callback_query.message.chat.id)
     bot.send_message(callback_query.from_user.id, "Наименование товара: ")
 
 
 @bot.message_handler(state=BotRequestStates.req_type)
-def cargo_type_calculator(message: Message) -> None:
+def cargo_type_request(message: Message) -> None:
     with bot.retrieve_data(message.from_user.id) as data:
         data["type"] = message.text
     bot.set_state(message.from_user.id, BotRequestStates.req_invoice, message.chat.id)
@@ -25,7 +26,7 @@ def cargo_type_calculator(message: Message) -> None:
 
 
 @bot.message_handler(state=BotRequestStates.req_invoice)
-def cargo_invoice_calculator(message: Message) -> None:
+def cargo_invoice_request(message: Message) -> None:
     try:
         i_res = message.text.replace(",", ".")
         res = float(i_res)
@@ -41,7 +42,7 @@ def cargo_invoice_calculator(message: Message) -> None:
 
 
 @bot.message_handler(state=BotRequestStates.req_weight)
-def cargo_weight_calculator(message: Message) -> None:
+def cargo_weight_request(message: Message) -> None:
     try:
         i_res = message.text.replace(",", ".")
         res = float(i_res)
@@ -57,7 +58,7 @@ def cargo_weight_calculator(message: Message) -> None:
 
 
 @bot.message_handler(state=BotRequestStates.req_volume)
-def cargo_volume_calculator(message: Message) -> None:
+def cargo_volume_request(message: Message) -> None:
     try:
         i_res = message.text.replace(",", ".")
         res = float(i_res)
@@ -73,7 +74,7 @@ def cargo_volume_calculator(message: Message) -> None:
 
 
 @bot.message_handler(state=BotRequestStates.req_city)
-def cargo_city_calculator(message: Message) -> None:
+def cargo_city_request(message: Message) -> None:
     try:
         for city in ["Москва", "Алматы"]:
             if city == message.text:
@@ -91,7 +92,7 @@ def cargo_city_calculator(message: Message) -> None:
 
 
 @bot.message_handler(state=BotRequestStates.req_unlicense)
-def cargo_unlicense_calculator(message: Message) -> None:
+def cargo_unlicense_request(message: Message) -> None:
     try:
         with bot.retrieve_data(message.from_user.id) as data:
             if message.text == "Да":
@@ -100,48 +101,60 @@ def cargo_unlicense_calculator(message: Message) -> None:
                 data["unlicense"] = False
             else:
                 raise ValueError
-        bot.set_state(message.from_user.id, BotRequestStates.req_send, message.chat.id)
-        bot.send_message(message.from_user.id, "Заявка собрана.",
-                         reply_markup=gen_send_markup())
+        bot.set_state(message.from_user.id, BotRequestStates.telegram, message.chat.id)
+        bot.send_message(message.from_user.id, "Контакт для связи: ",
+                         reply_markup=gen_phone_markup())
     except ValueError:
         bot.send_message(message.from_user.id, "Некорректный ввод. Надо выбрать Да или Нет.")
         bot.send_message(message.from_user.id, "Товар нелицензионный?")
 
-
-@bot.message_handler(state=BotRequestStates.req_send)
-def cargo_unlicense_calculator(message: Message) -> None:
+@bot.message_handler(state=BotRequestStates.telegram)
+def cargo_telegram_state_request(message: Message) -> None:
     try:
         if message.text:
             raise ValueError
     except ValueError:
         bot.send_message(message.from_user.id, "Некорректный ввод. Выберите кнопку")
+        bot.send_message(message.from_user.id, "Контакт для связи: ")
+@bot.message_handler(content_types=['contact'])
+def cargo_telegram_request(message: Message):
+    telegram = message.contact.phone_number
+    with bot.retrieve_data(message.from_user.id) as data:
+        data["phone_number"] = telegram
+    bot.set_state(message.from_user.id, BotRequestStates.req_send, message.chat.id)
+    bot.send_message(message.from_user.id, f"Заявка создана.", reply_markup=gen_send_markup())
 
 
-@bot.callback_query_handler(func=lambda callback_query: callback_query.data == "send")
-def cargo_calculate_calculator(callback_query: CallbackQuery) -> None:
-    with bot.retrieve_data(callback_query.from_user.id) as data:
-        now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        type, weight, invoice, volume, city, unlicense = data["type"], data["weight"], data["invoice"], data["volume"], \
-        data["city"], data["unlicense"]
-    Request.create(
-        user=callback_query.from_user.full_name,
-        date=now,
-        type=type,
-        invoice=invoice,
-        weight=weight,
-        volume=volume,
-        city=city,
-        unlicense=unlicense
-    )
-    bot.delete_state(callback_query.from_user.id)
-    bot.send_message(callback_query.from_user.id, f"{callback_query.from_user.full_name}|{now}|{data["type"]}|"
-                                                  f"{data["invoice"]}|{data["weight"]}|{data["volume"]}|{data["city"]}|"
-                                                  f"{data["unlicense"]}")
+@bot.message_handler(state=BotRequestStates.req_send)
+def cargo_send_request(message: Message) -> None:
+    try:
+        if message.text == "Отправить":
+            with (bot.retrieve_data(message.from_user.id) as data):
+                now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                type, weight, invoice, volume, city, unlicense, phone_number = data["type"], data["weight"], \
+                    data["invoice"], data["volume"], data["city"], data["unlicense"], data["phone_number"]
+            Request.create(
+                user=message.from_user.full_name,
+                date=now,
+                type=type,
+                invoice=invoice,
+                weight=weight,
+                volume=volume,
+                city=city,
+                unlicense=unlicense,
+                phone_number=phone_number
+            )
+            bot.set_state(message.from_user.id, BotStates.default, message.chat.id)
+            bot.send_message(message.from_user.id, f"{message.from_user.full_name}|{data["phone_number"]}|{now}|"
+                                                   f"{data["type"]}|{data["invoice"]}|{data["weight"]}|{data["volume"]}"
+                                                   f"|{data["city"]}|{data["unlicense"]}",
+                             reply_markup=ReplyKeyboardRemove())
+            bot.send_message(message.from_user.id, f"Для возврата в главное меню нажмите:",
+                             reply_markup=gen_main_markup())
+        else:
+            raise ValueError
+    except ValueError:
+        bot.send_message(message.from_user.id, "Некорректный ввод. Выберите кнопку")
 
 
-# @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "main_menu")
-# def main_menu(callback_query: CallbackQuery) -> None:
-#     bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id,
-#                           text="Возврат в главное меню", reply_markup=None)
-#     bot.send_message(callback_query.from_user.id, f"Добро пожаловать в главное меню. Выберите команду:",
-#                      reply_markup=gen_start_markup())
+

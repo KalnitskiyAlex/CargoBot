@@ -1,6 +1,7 @@
 from telebot.types import CallbackQuery, Message, ReplyKeyboardRemove
-from keyboards.inline.inlineButtons import (gen_calculate_markup, gen_main_markup, gen_start_markup)
-from keyboards.reply.replyButtons import gen_type_markup, gen_city_markup, gen_unlicense_markup
+
+from keyboards.inline.inlineButtons import gen_main_markup
+from keyboards.reply.replyButtons import gen_type_markup, gen_city_markup, gen_unlicense_markup, gen_calculate_markup
 from loader import bot
 from states.states import BotStates
 from utils.misc.price_calculation import price_calculation
@@ -9,7 +10,10 @@ from utils.misc.price_selection import price_selection
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "calc")
 def cargo_start_calculator(callback_query: CallbackQuery) -> None:
-    global d
+    bot.send_message(callback_query.from_user.id, "Вы находитесь в Калькуляторе стоимости перевозок."
+                                                  "При расчетах прошу Вас ответственно подойти к заполнению полей "
+                                                  "калькулятора.")
+    bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
     bot.set_state(callback_query.from_user.id, BotStates.type, callback_query.message.chat.id)
     bot.send_message(callback_query.from_user.id, "Категория товара: ", reply_markup=gen_type_markup())
 
@@ -107,7 +111,7 @@ def cargo_unlicense_calculator(message: Message) -> None:
                 data["unlicense"] = False
             else:
                 raise ValueError
-        bot.set_state(message.from_user.id, BotStates.prequest, message.chat.id)
+        bot.set_state(message.from_user.id, BotStates.calculate, message.chat.id)
         bot.send_message(message.from_user.id, "Заявка собрана. Для расчета нажмите:",
                          reply_markup=gen_calculate_markup())
     except ValueError:
@@ -115,27 +119,19 @@ def cargo_unlicense_calculator(message: Message) -> None:
         bot.send_message(message.from_user.id, "Товар нелицензионный?")
 
 
-@bot.callback_query_handler(func=lambda callback_query: callback_query.data == "calculate")
-def cargo_calculate_calculator(callback_query: CallbackQuery) -> None:
-    bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id,
-                          text="Результат расчета: ", reply_markup=None)
-    with bot.retrieve_data(callback_query.from_user.id) as data:
-        # bot.send_message(callback_query.from_user.id, f"type = {data["type"]}")
-        # bot.send_message(callback_query.from_user.id, f"weight = {data["weight"]}")
-        # bot.send_message(callback_query.from_user.id, f"invoice = {data["invoice"]}")
-        # bot.send_message(callback_query.from_user.id, f"volume = {data["volume"]}")
-        # bot.send_message(callback_query.from_user.id, f"city = {data["city"]}")
-        # bot.send_message(callback_query.from_user.id, f"unlicense = {data["unlicense"]}")
-        base_price = price_selection(data["weight"], data["volume"], data["type"])
-        price = price_calculation(data["weight"], base_price, data["unlicense"], data["city"], data["invoice"])
-    bot.delete_state(callback_query.from_user.id)
-    bot.send_message(callback_query.from_user.id, f"Стоимость перевозки товара составляет {round(price, 2)} USD",
-                     reply_markup=gen_main_markup())
-
-
-@bot.callback_query_handler(func=lambda callback_query: callback_query.data == "main_menu")
-def main_menu(callback_query: CallbackQuery) -> None:
-    bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id,
-                          text="Возврат в главное меню", reply_markup=None)
-    bot.send_message(callback_query.from_user.id, f"Добро пожаловать в главное меню. Выберите команду:",
-                     reply_markup=gen_start_markup())
+@bot.message_handler(state=BotStates.calculate)
+def cargo_calculate_calculator(message: Message) -> None:
+    try:
+        if message.text == "Рассчитать":
+            with bot.retrieve_data(message.from_user.id) as data:
+                base_price = price_selection(data["weight"], data["volume"], data["type"])
+                price = price_calculation(data["weight"], base_price, data["unlicense"], data["city"], data["invoice"])
+            bot.set_state(message.from_user.id, BotStates.default, message.chat.id)
+            bot.send_message(message.from_user.id, f"Стоимость перевозки товара составляет {round(price, 2)} USD",
+                             reply_markup=ReplyKeyboardRemove())
+            bot.send_message(message.from_user.id, f"Для возврата в главное меню нажмите:",
+                             reply_markup=gen_main_markup())
+        else:
+            raise ValueError
+    except ValueError:
+        bot.send_message(message.from_user.id, "Некорректный ввод. Надо выбрать кнопку.")
