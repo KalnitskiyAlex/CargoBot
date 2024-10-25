@@ -22,8 +22,14 @@ def gen_calculate_markup():
     keyboard.add(InlineKeyboardButton("Рассчитать", callback_data="calculate"))
     return keyboard
 
+
 def gen_main_markup() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(text="Главное меню", callback_data="main_menu"))
     return keyboard
 
+
+def gen_send_markup() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Отправить", callback_data="send"))
+    return keyboard

@@ -2,6 +2,7 @@ from peewee import *
 
 db = SqliteDatabase("database.db")
 
+
 class BaseModels(Model):
     class Meta:
         database = db
@@ -17,20 +18,22 @@ class User(BaseModels):
         db_table = "users"
 
 
-# class Request(BaseModels):
-#     user = ForeignKeyField(User, backref="requests")
-#     date = DateTimeField()
-#     coins_pair = CharField()
-#     curr_cost = FloatField()
-#     max_cost = FloatField()
-#     min_cost = FloatField()
-#
-#     def __str__(self) -> str:
-#         return (f"{self.date} | {self.coins_pair} | curr_cost: {self.curr_cost}, max_cost: {self.max_cost}, min_cost: "
-#                 f"{self.min_cost}")
-#
-#     class Meta:
-#         db_table = "requests"
+class Request(BaseModels):
+    user = ForeignKeyField(User, backref="requests")
+    date = DateTimeField()
+    type = CharField()
+    invoice = FloatField()
+    weight = FloatField()
+    volume = FloatField()
+    city = CharField()
+    unlicense = BooleanField()
+
+    def __str__(self) -> str:
+        return (f"{self.user}|{self.date}|{self.type}|{self.invoice}|{self.weight}|{self.volume}|{self.city}"
+                f"|{self.unlicense}")
+
+    class Meta:
+        db_table = "requests"
 
 
-db.create_tables([User])
+db.create_tables([User, Request])

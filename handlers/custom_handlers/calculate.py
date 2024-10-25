@@ -6,8 +6,6 @@ from states.states import BotStates
 from utils.misc.price_calculation import price_calculation
 from utils.misc.price_selection import price_selection
 
-d = None
-
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "calc")
 def cargo_start_calculator(callback_query: CallbackQuery) -> None:
@@ -47,6 +45,7 @@ def cargo_invoice_calculator(message: Message) -> None:
     except ValueError:
         bot.send_message(message.from_user.id, "Некорректный ввод.")
         bot.send_message(message.from_user.id, "Цена товара в USD: ")
+
 
 @bot.message_handler(state=BotStates.weight)
 def cargo_weight_calculator(message: Message) -> None:
@@ -114,8 +113,6 @@ def cargo_unlicense_calculator(message: Message) -> None:
     except ValueError:
         bot.send_message(message.from_user.id, "Некорректный ввод. Надо выбрать Да или Нет.")
         bot.send_message(message.from_user.id, "Товар нелицензионный?")
-
-
 
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "calculate")
