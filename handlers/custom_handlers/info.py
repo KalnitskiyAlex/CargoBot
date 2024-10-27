@@ -16,4 +16,4 @@ def cargo_start_calculator(callback_query: CallbackQuery) -> None:
                                                   "+7 995 791 36 05\n\n"
                                                   "E-mail: info@icargo.com.kz\n"
                                                   "Web: icargo.com.kz")
-    bot.send_message(callback_query.from_user.id, f"Для возврата в главное меню нажмите:", reply_markup=gen_main_markup())
+    bot.send_message(callback_query.from_user.id, "Вернуться в главное меню?", reply_markup=gen_main_markup())

@@ -29,4 +29,4 @@ def cargo_start_calculator(callback_query: CallbackQuery) -> None:
                                                   "предоставления накладной. При отстутствии комментариев клиента в "
                                                   "течение трех рабочих дней - предполагается, что содержание накладной "
                                                   "верно и изменению не подлежит.")
-    bot.send_message(callback_query.from_user.id, f"Для возврата в главное меню нажмите:", reply_markup=gen_main_markup())
+    bot.send_message(callback_query.from_user.id, "Вернуться в главное меню?", reply_markup=gen_main_markup())

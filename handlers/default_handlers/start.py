@@ -11,6 +11,7 @@ from states.states import BotStates
 @bot.message_handler(commands=["start"])
 def bot_start(message: Message):
     bot.set_state(message.from_user.id, BotStates.default, message.chat.id)
+    bot.edit_message_reply_markup(message.from_user.id, message.message_id - 1, reply_markup=None)
     try:
         User.create(
             user_id=message.from_user.id,

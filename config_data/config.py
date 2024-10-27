@@ -7,7 +7,8 @@ else:
     load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-RAPID_API_KEY = os.getenv("RAPID_API_KEY")
+MANAGER_ID1 = os.getenv("MANAGER_ID1")
+MANAGER_ID = os.getenv("MANAGER_ID")
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
     ("help", "Вывести справку")

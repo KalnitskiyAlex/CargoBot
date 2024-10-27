@@ -1,5 +1,6 @@
 from telebot.types import CallbackQuery, Message, ReplyKeyboardRemove
 
+from config_data.config import MANAGER_ID
 from database.db_classes import Request
 from keyboards.inline.inlineButtons import gen_main_markup
 from keyboards.reply.replyButtons import gen_city_markup, gen_unlicense_markup, gen_send_markup, gen_phone_markup
@@ -131,8 +132,12 @@ def cargo_send_request(message: Message) -> None:
         if message.text == "Отправить":
             with (bot.retrieve_data(message.from_user.id) as data):
                 now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                type, weight, invoice, volume, city, unlicense, phone_number = data["type"], data["weight"], \
-                    data["invoice"], data["volume"], data["city"], data["unlicense"], data["phone_number"]
+                type, weight, invoice, volume, city, phone_number = data["type"], data["weight"], data["invoice"], \
+                data["volume"], data["city"], data["phone_number"]
+                if data["unlicense"]:
+                    unlicense = "Да"
+                else:
+                    unlicense = "Нет"
             Request.create(
                 user=message.from_user.full_name,
                 date=now,
@@ -145,10 +150,13 @@ def cargo_send_request(message: Message) -> None:
                 phone_number=phone_number
             )
             bot.set_state(message.from_user.id, BotStates.default, message.chat.id)
-            bot.send_message(message.from_user.id, f"{message.from_user.full_name}|{data["phone_number"]}|{now}|"
-                                                   f"{data["type"]}|{data["invoice"]}|{data["weight"]}|{data["volume"]}"
-                                                   f"|{data["city"]}|{data["unlicense"]}",
-                             reply_markup=ReplyKeyboardRemove())
+            bot.send_message(message.from_user.id, f"Заявка отправлена на расчет.", reply_markup=ReplyKeyboardRemove())
+            bot.send_message(MANAGER_ID, f"Заказчик: {message.from_user.full_name}\nКонтактный номер: "
+                                                   f"{data["phone_number"]}\nДата заявки: {now}\nПараметры заявки\n"
+                                                   f"Тип товара: {data["type"]}\nСтоимость товара по инвойсу, USD: "
+                                                   f"{data["invoice"]}\nВес брутто, кг: {data["weight"]}\nОбъём, м3: "
+                                                   f"{data["volume"]}\nГород назначения: {data["city"]}\n"
+                                                   f"Товар нелицензионный: {data["unlicense"]}")
             bot.send_message(message.from_user.id, f"Для возврата в главное меню нажмите:",
                              reply_markup=gen_main_markup())
         else:

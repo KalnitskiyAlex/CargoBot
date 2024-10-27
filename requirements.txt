@@ -3,3 +3,4 @@ python-dotenv==0.21.1
 
 telebot~=0.0.5
 peewee~=3.17.7
+requests~=2.32.3
