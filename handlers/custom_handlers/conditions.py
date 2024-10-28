@@ -6,7 +6,7 @@ from loader import bot
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "conditions")
 def cargo_start_calculator(callback_query: CallbackQuery) -> None:
     bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
-    bot.send_message(callback_query.from_user.id, "Условия перевозки товаров:\n"
+    bot.send_message(callback_query.from_user.id, "<u><b>Условия перевозки товаров</b></u>:\n"
                                                   "1. Товар при перевозке подлежит страхованию. "
                                                   "Максимальная страховая стоимость товара не превышает 100 USD/кг.\n"
                                                   "2. Не принимаются к перевозке: контрабандные товары такие как: шерсть, "
@@ -28,5 +28,6 @@ def cargo_start_calculator(callback_query: CallbackQuery) -> None:
                                                   "уточнения принимаются в течение трех рабочих дней с даты "
                                                   "предоставления накладной. При отстутствии комментариев клиента в "
                                                   "течение трех рабочих дней - предполагается, что содержание накладной "
-                                                  "верно и изменению не подлежит.")
-    bot.send_message(callback_query.from_user.id, "Вернуться в главное меню?", reply_markup=gen_main_markup())
+                                                  "верно и изменению не подлежит.", parse_mode='HTML')
+    bot.send_message(callback_query.from_user.id, f"<b>Вернуться в <u><i>Главное меню</i></u></b>?",
+                     reply_markup=gen_main_markup(), parse_mode='HTML')

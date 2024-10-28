@@ -8,8 +8,9 @@ from states.states import BotStates
 def to_main_menu(callback_query: CallbackQuery) -> None:
     bot.set_state(callback_query.from_user.id, BotStates.default, callback_query.message.chat.id)
     bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
-    bot.send_message(callback_query.from_user.id, f"Добро пожаловать в главное меню. Выберите команду:",
-                     reply_markup=gen_start_markup())
+    bot.send_message(callback_query.from_user.id, f"Добро пожаловать в <i><u><b>Главное меню</b></u></i>. "
+                                                  f"Выберите команду:", reply_markup=gen_start_markup(),
+                     parse_mode="HTML")
 
 
 @bot.message_handler(state=BotStates.default)

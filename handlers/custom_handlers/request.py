@@ -11,8 +11,8 @@ from datetime import datetime
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "new_order")
 def cargo_start_request(callback_query: CallbackQuery) -> None:
-    bot.send_message(callback_query.from_user.id, "Вы формируете Заявку на перевозку груза. "
-                                                  "Прошу Вас ответственно подойти к заполнению разделов заявки.")
+    bot.send_message(callback_query.from_user.id, "<u><b>Заявка на перевозку груза</b></u>",
+                                                  parse_mode="HTML")
     bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
     bot.set_state(callback_query.from_user.id, BotRequestStates.req_type, callback_query.message.chat.id)
     bot.send_message(callback_query.from_user.id, "Наименование товара: ")
@@ -123,7 +123,7 @@ def cargo_telegram_request(message: Message):
     with bot.retrieve_data(message.from_user.id) as data:
         data["phone_number"] = telegram
     bot.set_state(message.from_user.id, BotRequestStates.req_send, message.chat.id)
-    bot.send_message(message.from_user.id, f"Заявка создана.", reply_markup=gen_send_markup())
+    bot.send_message(message.from_user.id, "Заявка создана", reply_markup=gen_send_markup())
 
 
 @bot.message_handler(state=BotRequestStates.req_send)
@@ -146,19 +146,24 @@ def cargo_send_request(message: Message) -> None:
                 weight=weight,
                 volume=volume,
                 city=city,
-                unlicense=unlicense,
+                unlicense=data["unlicense"],
                 phone_number=phone_number
             )
             bot.set_state(message.from_user.id, BotStates.default, message.chat.id)
-            bot.send_message(message.from_user.id, f"Заявка отправлена на расчет.", reply_markup=ReplyKeyboardRemove())
-            bot.send_message(MANAGER_ID, f"Заказчик: {message.from_user.full_name}\nКонтактный номер: "
-                                                   f"{data["phone_number"]}\nДата заявки: {now}\nПараметры заявки\n"
-                                                   f"Тип товара: {data["type"]}\nСтоимость товара по инвойсу, USD: "
-                                                   f"{data["invoice"]}\nВес брутто, кг: {data["weight"]}\nОбъём, м3: "
-                                                   f"{data["volume"]}\nГород назначения: {data["city"]}\n"
-                                                   f"Товар нелицензионный: {data["unlicense"]}")
-            bot.send_message(message.from_user.id, f"Для возврата в главное меню нажмите:",
-                             reply_markup=gen_main_markup())
+            bot.send_message(message.from_user.id, f"<u><b>Заявка отправлена на расчет</b></u>.",
+                             reply_markup=ReplyKeyboardRemove(), parse_mode="HTML")
+            try:
+                bot.send_message(message.from_user.id, f"Заказчик: {message.from_user.full_name}\nКонтактный номер: "
+                                                       f"{data["phone_number"]}\nДата заявки: {now}\n<u><b>Параметры "
+                                                       f"заявки:</b></u>\n"
+                                                       f"Тип товара: {data["type"]}\nСтоимость товара по инвойсу, USD: "
+                                                       f"{data["invoice"]}\nВес брутто, кг: {data["weight"]}\nОбъём, м3: "
+                                                       f"{data["volume"]}\nГород назначения: {data["city"]}\n"
+                                                       f"Товар нелицензионный: {unlicense}", parse_mode="HTML")
+            except Exception as e:
+                print(f"Ошибка при отправке сообщения менеджеру: {e}")
+            bot.send_message(message.from_user.id, f"<b>Вернуться в <u><i>Главное меню</i></u></b>?",
+                             reply_markup=gen_main_markup(), parse_mode="HTML")
         else:
             raise ValueError
     except ValueError:

@@ -10,9 +10,8 @@ from utils.misc.price_selection import price_selection
 
 @bot.callback_query_handler(func=lambda callback_query: callback_query.data == "calc")
 def cargo_start_calculator(callback_query: CallbackQuery) -> None:
-    bot.send_message(callback_query.from_user.id, "Вы находитесь в Калькуляторе стоимости перевозок."
-                                                  "При расчетах прошу Вас ответственно подойти к заполнению полей "
-                                                  "калькулятора.")
+    bot.send_message(callback_query.from_user.id, "<u><b>Калькулятор стоимости перевозок</b></u>",
+                     parse_mode='HTML')
     bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
     bot.set_state(callback_query.from_user.id, BotStates.type, callback_query.message.chat.id)
     bot.send_message(callback_query.from_user.id, "Категория товара: ", reply_markup=gen_type_markup())
@@ -112,7 +111,7 @@ def cargo_unlicense_calculator(message: Message) -> None:
             else:
                 raise ValueError
         bot.set_state(message.from_user.id, BotStates.calculate, message.chat.id)
-        bot.send_message(message.from_user.id, "Заявка собрана. Для расчета нажмите:",
+        bot.send_message(message.from_user.id, "Для расчета нажмите:",
                          reply_markup=gen_calculate_markup())
     except ValueError:
         bot.send_message(message.from_user.id, "Некорректный ввод. Надо выбрать Да или Нет.")
@@ -129,8 +128,8 @@ def cargo_calculate_calculator(message: Message) -> None:
             bot.set_state(message.from_user.id, BotStates.default, message.chat.id)
             bot.send_message(message.from_user.id, f"Стоимость перевозки товара составляет {round(price, 2)} USD",
                              reply_markup=ReplyKeyboardRemove())
-            bot.send_message(message.from_user.id, f"Для возврата в главное меню нажмите:",
-                             reply_markup=gen_main_markup())
+            bot.send_message(message.from_user.id, f"<b>Вернуться в <u><i>Главное меню</i></u></b>?",
+                             reply_markup=gen_main_markup(), parse_mode="HTML")
         else:
             raise ValueError
     except ValueError:
